@@ -1,4 +1,4 @@
-```jsx
+
 import React, { useMemo, useState } from "react";
 import { Gamepad2, Monitor, Joystick, Check } from "lucide-react";
 
@@ -518,4 +518,3 @@ export default function App() {
     </main>
   );
 }
-```
