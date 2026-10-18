@@ -62,7 +62,7 @@ const addons = [
 function PlanIcon({ id }) {
   if (id === "arcade") {
     return (
-      <span className="plan-icon arcade-icon">
+      <span className="plan-icon arcade">
         <Gamepad2 size={24} />
       </span>
     );
@@ -70,14 +70,14 @@ function PlanIcon({ id }) {
 
   if (id === "advanced") {
     return (
-      <span className="plan-icon advanced-icon">
+      <span className="plan-icon advanced">
         <Monitor size={24} />
       </span>
     );
   }
 
   return (
-    <span className="plan-icon pro-icon">
+    <span className="plan-icon pro">
       <Joystick size={24} />
     </span>
   );
@@ -85,11 +85,13 @@ function PlanIcon({ id }) {
 
 export default function App() {
   const [step, setStep] = useState(1);
+
   const [user, setUser] = useState({
     userName: "",
     email: "",
     phone: "",
   });
+
   const [errors, setErrors] = useState({});
   const [planId, setPlanId] = useState("");
   const [yearly, setYearly] = useState(false);
@@ -187,9 +189,7 @@ export default function App() {
             </span>
 
             <span className="step-copy">
-              <span className="step-label">
-                Step {item.number}
-              </span>
+              <small className="step-label">Step {item.number}</small>
               <strong>{item.label}</strong>
             </span>
           </div>
@@ -204,17 +204,17 @@ export default function App() {
         <section className="form-card">
           {sidebar}
 
-          <div className="content thankyou-content" aria-live="polite">
-            <div className="thankyou-mark">
+          <div className="content thankyou" aria-live="polite">
+            <div className="thank-icon">
               <Check size={42} />
             </div>
 
             <h1>Thank You!</h1>
 
             <p>
-              Thanks for confirming your subscription! We hope you
-              have fun using our platform. If you ever need support,
-              please feel free to email us at{" "}
+              Thanks for confirming your subscription! We hope you have fun
+              using our platform. If you ever need support, please feel free
+              to email us at{" "}
               <a href="mailto:support@loremgaming.com">
                 support@loremgaming.com
               </a>
@@ -232,7 +232,7 @@ export default function App() {
         {sidebar}
 
         <div className="content">
-          <header className="step-heading">
+          <header className="heading">
             <h1>{steps[step - 1].title}</h1>
             <p>{steps[step - 1].subtitle}</p>
           </header>
@@ -268,13 +268,11 @@ export default function App() {
                 },
               ].map((field) => (
                 <div className="field" key={field.name}>
-                  <div className="field-label-row">
-                    <label htmlFor={field.name}>
-                      {field.label}
-                    </label>
+                  <div className="field-label">
+                    <label htmlFor={field.name}>{field.label}</label>
 
                     {errors[field.name] && (
-                      <span className="error-text">
+                      <span className="error">
                         {errors[field.name]}
                       </span>
                     )}
@@ -288,6 +286,11 @@ export default function App() {
                     value={user[field.name]}
                     onChange={updateUser}
                     aria-invalid={Boolean(errors[field.name])}
+                    aria-describedby={
+                      errors[field.name]
+                        ? `${field.name}-error`
+                        : undefined
+                    }
                   />
                 </div>
               ))}
@@ -324,7 +327,6 @@ export default function App() {
                       <span>
                         ${plan[priceKey]}/{period}
                       </span>
-
                       {yearly && <small>2 months free</small>}
                     </span>
                   </button>
@@ -332,30 +334,26 @@ export default function App() {
               </div>
 
               {errors.plan && (
-                <p className="error-text plan-error">
+                <p className="error plan-error" role="alert">
                   {errors.plan}
                 </p>
               )}
 
-              <div className="billing-switch">
-                <span className={!yearly ? "billing-active" : ""}>
-                  Monthly
-                </span>
+              <div className="billing">
+                <span className={!yearly ? "active" : ""}>Monthly</span>
 
                 <button
                   type="button"
-                  className={`switch ${yearly ? "is-yearly" : ""}`}
+                  className={`switch ${yearly ? "yearly" : ""}`}
                   role="switch"
                   aria-checked={yearly}
                   aria-label="Toggle yearly billing"
                   onClick={() => setYearly((current) => !current)}
                 >
-                  <span />
+                  <i />
                 </button>
 
-                <span className={yearly ? "billing-active" : ""}>
-                  Yearly
-                </span>
+                <span className={yearly ? "active" : ""}>Yearly</span>
               </div>
 
               <div className="actions">
@@ -386,22 +384,21 @@ export default function App() {
                   const checked = selectedAddons.includes(addon.id);
 
                   return (
-                    <button
-                      type="button"
+                    <label
                       key={addon.id}
                       className={`addon_card ${
                         checked ? "selected" : ""
                       }`}
-                      onClick={() => toggleAddon(addon.id)}
-                      aria-pressed={checked}
                     >
-                      <span
-                        className={`custom-checkbox ${
-                          checked ? "checked" : ""
-                        }`}
-                      >
-                        {checked && <Check size={14} />}
-                      </span>
+                      <input
+                        type="checkbox"
+                        className="addon-checkbox"
+                        name="addons"
+                        value={addon.id}
+                        checked={checked}
+                        onChange={() => toggleAddon(addon.id)}
+                        aria-label={addon.name}
+                      />
 
                       <span className="addon-info">
                         <strong>{addon.name}</strong>
@@ -411,7 +408,7 @@ export default function App() {
                       <span className="addon-price">
                         +${addon[priceKey]}/{period}
                       </span>
-                    </button>
+                    </label>
                   );
                 })}
               </div>
@@ -439,17 +436,16 @@ export default function App() {
           {/* STEP 4: SUMMARY */}
           {step === 4 && (
             <div className="step-body">
-              <div className="summary-box">
+              <div className="summary">
                 <div className="summary-plan">
                   <div>
                     <strong>
-                      {selectedPlan?.name} (
-                      {yearly ? "Yearly" : "Monthly"})
+                      {selectedPlan?.name} ({yearly ? "Yearly" : "Monthly"})
                     </strong>
 
                     <button
                       type="button"
-                      className="change-link"
+                      className="change"
                       onClick={() => {
                         setErrors({});
                         setStep(2);
@@ -459,36 +455,26 @@ export default function App() {
                     </button>
                   </div>
 
-                  <strong className="summary-price">
+                  <strong>
                     ${selectedPlan?.[priceKey]}/{period}
                   </strong>
                 </div>
 
-                {selectedAddons.length > 0 && (
-                  <div className="summary-addons">
-                    {addons
-                      .filter((addon) =>
-                        selectedAddons.includes(addon.id)
-                      )
-                      .map((addon) => (
-                        <div
-                          className="summary-addon"
-                          key={addon.id}
-                        >
-                          <span>{addon.name}</span>
-                          <strong>
-                            +${addon[priceKey]}/{period}
-                          </strong>
-                        </div>
-                      ))}
-                  </div>
-                )}
+                {selectedAddons.length > 0 &&
+                  addons
+                    .filter((addon) => selectedAddons.includes(addon.id))
+                    .map((addon) => (
+                      <div className="summary-addon" key={addon.id}>
+                        <span>{addon.name}</span>
+                        <strong>
+                          +${addon[priceKey]}/{period}
+                        </strong>
+                      </div>
+                    ))}
               </div>
 
-              <div className="total-row">
-                <span>
-                  Total (per {yearly ? "year" : "month"})
-                </span>
+              <div className="total">
+                <span>Total (per {yearly ? "year" : "month"})</span>
                 <strong>
                   +${total}/{period}
                 </strong>
@@ -504,7 +490,8 @@ export default function App() {
                 </button>
 
                 <button
-                  id="confirm-button"
+                  id="next-button"
+                  className="confirm-button"
                   type="button"
                   onClick={() => setConfirmed(true)}
                 >
