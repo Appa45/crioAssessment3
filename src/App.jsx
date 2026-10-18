@@ -1,4 +1,521 @@
-import React,{useMemo,useState}from'react';import{Gamepad2,Monitor,Joystick,Check}from'lucide-react';
-const steps=[['YOUR INFO','Personal info','Please provide your name, email address, and phone number.'],['SELECT PLAN','Select your plan','You have the option of monthly or yearly billing.'],['ADD-ONS','Pick add-ons','Add-ons help enhance your gaming experience.'],['SUMMARY','Finishing up','Double-check everything looks OK before confirming.']];
-const plans=[{id:'arcade',name:'Arcade',monthly:9,yearly:90,Icon:Gamepad2},{id:'advanced',name:'Advanced',monthly:12,yearly:120,Icon:Monitor},{id:'pro',name:'Pro',monthly:15,yearly:150,Icon:Joystick}];const addons=[{id:'online',name:'Online service',description:'Access to multiplayer games',monthly:1,yearly:10},{id:'storage',name:'Larger storage',description:'Extra 1TB of cloud save',monthly:2,yearly:20},{id:'profile',name:'Customizable Profile',description:'Custom theme on your profile',monthly:2,yearly:20}];
-export default function App(){const[step,S]=useState(1),[user,U]=useState({userName:'',email:'',phone:''}),[errors,E]=useState({}),[plan,P]=useState(''),[yearly,Y]=useState(false),[picked,A]=useState([]),[done,D]=useState(false);const key=yearly?'yearly':'monthly',period=yearly?'yr':'mo',selected=plans.find(p=>p.id===plan),total=useMemo(()=>selected?selected[key]+addons.filter(a=>picked.includes(a.id)).reduce((n,a)=>n+a[key],0):0,[selected,picked,key]);function update(e){U({...user,[e.target.name]:e.target.value});E({...errors,[e.target.name]:''})}function validate(){let e={};if(step===1){if(!user.userName.trim())e.userName='This field is required';if(!user.email.trim())e.email='This field is required';else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email.trim()))e.email='Enter a valid email address';if(!user.phone.trim())e.phone='This field is required'}if(step===2&&!plan)e.plan='Please select a plan';E(e);return !Object.keys(e).length}function next(){if(validate())S(Math.min(4,step+1))}function back(){E({});S(Math.max(1,step-1))}const sidebar=<aside className="sidebar"><div className="steps-list">{steps.map((s,i)=><div className="step-item" key={s[0]}><span className={'step-number '+(step===i+1?'active':'')}>{i+1}</span><span className="step-copy"><small>STEP {i+1}</small><strong>{s[0]}</strong></span></div>)}</div></aside>;if(done)return <main className="page-shell"><section className="form-card">{sidebar}<div className="content thankyou"><div className="thank-icon"><Check size={40}/></div><h1>Thank You!</h1><p>Thanks for confirming your subscription! We hope you have fun using our platform. If you ever need support, please feel free to email us at <a href="mailto:support@loremgaming.com">support@loremgaming.com</a>.</p></div></section></main>;return <main className="page-shell"><section className="form-card">{sidebar}<div className="content"><header className="heading"><h1>{steps[step-1][1]}</h1><p>{steps[step-1][2]}</p></header>{step===1&&<form className="fields" noValidate onSubmit={e=>{e.preventDefault();next()}}>{[['userName','Name','e.g. Stephen King','text'],['email','Email Address','e.g. stephenking@lorem.com','email'],['phone','Phone Number','e.g. +1 234 567 890','tel']].map(([name,label,placeholder,type])=><div className="field" key={name}><div className="field-label"><label htmlFor={name}>{label}</label>{errors[name]&&<span className="error">{errors[name]}</span>}</div><input id={name} name={name} type={type} placeholder={placeholder} value={user[name]} onChange={update} aria-invalid={!!errors[name]}/></div>)}<div className="actions right"><button id="next-button">Next Step</button></div></form>}{step===2&&<div className="step-body"><div className="plan-grid">{plans.map(({id,name,Icon,...p})=><button type="button" key={id} className={'plan_car '+(plan===id?'selected':'')} onClick={()=>{P(id);E({})}}><span className={'plan-icon '+id}><Icon size={24}/></span><span className="plan-details"><strong>{name}</strong><span>${p[key]}/{period}</span>{yearly&&<small>2 months free</small>}</span></button>)}</div>{errors.plan&&<p className="error">{errors.plan}</p>}<div className="billing"><span className={!yearly?'active':''}>Monthly</span><button type="button" className={'switch '+(yearly?'yearly':'')} role="switch" aria-checked={yearly} aria-label="Toggle yearly billing" onClick={()=>Y(!yearly)}><i/></button><span className={yearly?'active':''}>Yearly</span></div><div className="actions"><button className="back" onClick={back}>Go Back</button><button id="next-button" onClick={next}>Next Step</button></div></div>}{step===3&&<div className="step-body"><div className="addon-list">{addons.map(a=>{let checked=picked.includes(a.id);return <button type="button" key={a.id} className={'addon_card '+(checked?'selected':'')} onClick={()=>A(checked?picked.filter(x=>x!==a.id):[...picked,a.id])}><span className={'checkbox '+(checked?'checked':'')}>{checked&&<Check size={14}/>}</span><span className="addon-info"><strong>{a.name}</strong><small>{a.description}</small></span><span className="addon-price">+${a[key]}/{period}</span></button>})}</div><div className="actions"><button className="back" onClick={back}>Go Back</button><button id="next-button" onClick={next}>Next Step</button></div></div>}{step===4&&<div className="step-body"><div className="summary"><div className="summary-plan"><div><strong>{selected?.name} ({yearly?'Yearly':'Monthly'})</strong><button className="change" onClick={()=>S(2)}>Change</button></div><strong>${selected?.[key]}/{period}</strong></div>{addons.filter(a=>picked.includes(a.id)).map(a=><div className="summary-addon" key={a.id}><span>{a.name}</span><strong>+${a[key]}/{period}</strong></div>)}</div><div className="total"><span>Total (per {yearly?'year':'month'})</span><strong>+${total}/{period}</strong></div><div className="actions"><button className="back" onClick={back}>Go Back</button><button id="confirm-button" onClick={()=>D(true)}>Confirm</button></div></div>}</div></section></main>}
+```jsx
+import React, { useMemo, useState } from "react";
+import { Gamepad2, Monitor, Joystick, Check } from "lucide-react";
+
+const steps = [
+  {
+    number: 1,
+    label: "YOUR INFO",
+    title: "Personal info",
+    subtitle: "Please provide your name, email address, and phone number.",
+  },
+  {
+    number: 2,
+    label: "SELECT PLAN",
+    title: "Select your plan",
+    subtitle: "You have the option of monthly or yearly billing.",
+  },
+  {
+    number: 3,
+    label: "ADD-ONS",
+    title: "Pick add-ons",
+    subtitle: "Add-ons help enhance your gaming experience.",
+  },
+  {
+    number: 4,
+    label: "SUMMARY",
+    title: "Finishing up",
+    subtitle: "Double-check everything looks OK before confirming.",
+  },
+];
+
+const plans = [
+  { id: "arcade", name: "Arcade", monthly: 9, yearly: 90 },
+  { id: "advanced", name: "Advanced", monthly: 12, yearly: 120 },
+  { id: "pro", name: "Pro", monthly: 15, yearly: 150 },
+];
+
+const addons = [
+  {
+    id: "online",
+    name: "Online service",
+    description: "Access to multiplayer games",
+    monthly: 1,
+    yearly: 10,
+  },
+  {
+    id: "storage",
+    name: "Larger storage",
+    description: "Extra 1TB of cloud save",
+    monthly: 2,
+    yearly: 20,
+  },
+  {
+    id: "profile",
+    name: "Customizable Profile",
+    description: "Custom theme on your profile",
+    monthly: 2,
+    yearly: 20,
+  },
+];
+
+function PlanIcon({ id }) {
+  if (id === "arcade") {
+    return (
+      <span className="plan-icon arcade-icon">
+        <Gamepad2 size={24} />
+      </span>
+    );
+  }
+
+  if (id === "advanced") {
+    return (
+      <span className="plan-icon advanced-icon">
+        <Monitor size={24} />
+      </span>
+    );
+  }
+
+  return (
+    <span className="plan-icon pro-icon">
+      <Joystick size={24} />
+    </span>
+  );
+}
+
+export default function App() {
+  const [step, setStep] = useState(1);
+  const [user, setUser] = useState({
+    userName: "",
+    email: "",
+    phone: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [planId, setPlanId] = useState("");
+  const [yearly, setYearly] = useState(false);
+  const [selectedAddons, setSelectedAddons] = useState([]);
+  const [confirmed, setConfirmed] = useState(false);
+
+  const selectedPlan = plans.find((plan) => plan.id === planId);
+  const priceKey = yearly ? "yearly" : "monthly";
+  const period = yearly ? "yr" : "mo";
+
+  const total = useMemo(() => {
+    if (!selectedPlan) return 0;
+
+    const addonTotal = addons
+      .filter((addon) => selectedAddons.includes(addon.id))
+      .reduce((sum, addon) => sum + addon[priceKey], 0);
+
+    return selectedPlan[priceKey] + addonTotal;
+  }, [selectedPlan, selectedAddons, priceKey]);
+
+  function updateUser(event) {
+    const { name, value } = event.target;
+
+    setUser((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+
+    setErrors((previous) => ({
+      ...previous,
+      [name]: "",
+    }));
+  }
+
+  function validateCurrentStep() {
+    const nextErrors = {};
+
+    if (step === 1) {
+      if (!user.userName.trim()) {
+        nextErrors.userName = "This field is required";
+      }
+
+      if (!user.email.trim()) {
+        nextErrors.email = "This field is required";
+      } else if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email.trim())
+      ) {
+        nextErrors.email = "Enter a valid email address";
+      }
+
+      if (!user.phone.trim()) {
+        nextErrors.phone = "This field is required";
+      }
+    }
+
+    if (step === 2 && !planId) {
+      nextErrors.plan = "Please select a plan";
+    }
+
+    setErrors(nextErrors);
+
+    return Object.keys(nextErrors).length === 0;
+  }
+
+  function nextStep() {
+    if (!validateCurrentStep()) return;
+
+    setStep((current) => Math.min(4, current + 1));
+  }
+
+  function previousStep() {
+    setErrors({});
+    setStep((current) => Math.max(1, current - 1));
+  }
+
+  function toggleAddon(id) {
+    setSelectedAddons((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id]
+    );
+  }
+
+  const sidebar = (
+    <aside className="sidebar" aria-label="Form progress">
+      <div className="steps-list">
+        {steps.map((item) => (
+          <div className="step-item" key={item.number}>
+            <span
+              className={`step-number ${
+                step === item.number ? "active" : ""
+              }`}
+            >
+              {item.number}
+            </span>
+
+            <span className="step-copy">
+              <span className="step-label">
+                Step {item.number}
+              </span>
+              <strong>{item.label}</strong>
+            </span>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+
+  if (confirmed) {
+    return (
+      <main className="page-shell">
+        <section className="form-card">
+          {sidebar}
+
+          <div className="content thankyou-content" aria-live="polite">
+            <div className="thankyou-mark">
+              <Check size={42} />
+            </div>
+
+            <h1>Thank You!</h1>
+
+            <p>
+              Thanks for confirming your subscription! We hope you
+              have fun using our platform. If you ever need support,
+              please feel free to email us at{" "}
+              <a href="mailto:support@loremgaming.com">
+                support@loremgaming.com
+              </a>
+              .
+            </p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="page-shell">
+      <section className="form-card">
+        {sidebar}
+
+        <div className="content">
+          <header className="step-heading">
+            <h1>{steps[step - 1].title}</h1>
+            <p>{steps[step - 1].subtitle}</p>
+          </header>
+
+          {/* STEP 1: PERSONAL INFORMATION */}
+          {step === 1 && (
+            <form
+              className="fields"
+              noValidate
+              onSubmit={(event) => {
+                event.preventDefault();
+                nextStep();
+              }}
+            >
+              {[
+                {
+                  name: "userName",
+                  label: "Name",
+                  placeholder: "e.g. Stephen King",
+                  type: "text",
+                },
+                {
+                  name: "email",
+                  label: "Email Address",
+                  placeholder: "e.g. stephenking@lorem.com",
+                  type: "email",
+                },
+                {
+                  name: "phone",
+                  label: "Phone Number",
+                  placeholder: "e.g. +1 234 567 890",
+                  type: "tel",
+                },
+              ].map((field) => (
+                <div className="field" key={field.name}>
+                  <div className="field-label-row">
+                    <label htmlFor={field.name}>
+                      {field.label}
+                    </label>
+
+                    {errors[field.name] && (
+                      <span className="error-text">
+                        {errors[field.name]}
+                      </span>
+                    )}
+                  </div>
+
+                  <input
+                    id={field.name}
+                    name={field.name}
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    value={user[field.name]}
+                    onChange={updateUser}
+                    aria-invalid={Boolean(errors[field.name])}
+                  />
+                </div>
+              ))}
+
+              <div className="actions actions-next-only">
+                <button id="next-button" type="submit">
+                  Next Step
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* STEP 2: SELECT PLAN */}
+          {step === 2 && (
+            <div className="step-body">
+              <div className="plan-grid">
+                {plans.map((plan) => (
+                  <button
+                    type="button"
+                    key={plan.id}
+                    className={`plan_card plan_car ${
+                      planId === plan.id ? "selected" : ""
+                    }`}
+                    onClick={() => {
+                      setPlanId(plan.id);
+                      setErrors({});
+                    }}
+                    aria-pressed={planId === plan.id}
+                  >
+                    <PlanIcon id={plan.id} />
+
+                    <span className="plan-details">
+                      <strong>{plan.name}</strong>
+                      <span>
+                        ${plan[priceKey]}/{period}
+                      </span>
+
+                      {yearly && <small>2 months free</small>}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {errors.plan && (
+                <p className="error-text plan-error">
+                  {errors.plan}
+                </p>
+              )}
+
+              <div className="billing-switch">
+                <span className={!yearly ? "billing-active" : ""}>
+                  Monthly
+                </span>
+
+                <button
+                  type="button"
+                  className={`switch ${yearly ? "is-yearly" : ""}`}
+                  role="switch"
+                  aria-checked={yearly}
+                  aria-label="Toggle yearly billing"
+                  onClick={() => setYearly((current) => !current)}
+                >
+                  <span />
+                </button>
+
+                <span className={yearly ? "billing-active" : ""}>
+                  Yearly
+                </span>
+              </div>
+
+              <div className="actions">
+                <button
+                  type="button"
+                  className="back-button"
+                  onClick={previousStep}
+                >
+                  Go Back
+                </button>
+
+                <button
+                  id="next-button"
+                  type="button"
+                  onClick={nextStep}
+                >
+                  Next Step
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: ADD-ONS */}
+          {step === 3 && (
+            <div className="step-body">
+              <div className="addon-list">
+                {addons.map((addon) => {
+                  const checked = selectedAddons.includes(addon.id);
+
+                  return (
+                    <button
+                      type="button"
+                      key={addon.id}
+                      className={`addon_card ${
+                        checked ? "selected" : ""
+                      }`}
+                      onClick={() => toggleAddon(addon.id)}
+                      aria-pressed={checked}
+                    >
+                      <span
+                        className={`custom-checkbox ${
+                          checked ? "checked" : ""
+                        }`}
+                      >
+                        {checked && <Check size={14} />}
+                      </span>
+
+                      <span className="addon-info">
+                        <strong>{addon.name}</strong>
+                        <small>{addon.description}</small>
+                      </span>
+
+                      <span className="addon-price">
+                        +${addon[priceKey]}/{period}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="actions">
+                <button
+                  type="button"
+                  className="back-button"
+                  onClick={previousStep}
+                >
+                  Go Back
+                </button>
+
+                <button
+                  id="next-button"
+                  type="button"
+                  onClick={nextStep}
+                >
+                  Next Step
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: SUMMARY */}
+          {step === 4 && (
+            <div className="step-body">
+              <div className="summary-box">
+                <div className="summary-plan">
+                  <div>
+                    <strong>
+                      {selectedPlan?.name} (
+                      {yearly ? "Yearly" : "Monthly"})
+                    </strong>
+
+                    <button
+                      type="button"
+                      className="change-link"
+                      onClick={() => {
+                        setErrors({});
+                        setStep(2);
+                      }}
+                    >
+                      Change
+                    </button>
+                  </div>
+
+                  <strong className="summary-price">
+                    ${selectedPlan?.[priceKey]}/{period}
+                  </strong>
+                </div>
+
+                {selectedAddons.length > 0 && (
+                  <div className="summary-addons">
+                    {addons
+                      .filter((addon) =>
+                        selectedAddons.includes(addon.id)
+                      )
+                      .map((addon) => (
+                        <div
+                          className="summary-addon"
+                          key={addon.id}
+                        >
+                          <span>{addon.name}</span>
+                          <strong>
+                            +${addon[priceKey]}/{period}
+                          </strong>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="total-row">
+                <span>
+                  Total (per {yearly ? "year" : "month"})
+                </span>
+                <strong>
+                  +${total}/{period}
+                </strong>
+              </div>
+
+              <div className="actions">
+                <button
+                  type="button"
+                  className="back-button"
+                  onClick={previousStep}
+                >
+                  Go Back
+                </button>
+
+                <button
+                  id="confirm-button"
+                  type="button"
+                  onClick={() => setConfirmed(true)}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}
+```
